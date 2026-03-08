@@ -1,0 +1,202 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Catálogo de Filmes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet" />
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .movie-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+            height: 100%;
+        }
+
+            .movie-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            }
+
+        .movie-poster {
+            height: 250px;
+            object-fit: cover;
+            background-color: #e9ecef;
+        }
+
+        .details-container {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.1rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="text-center">Catálogo de Filmes</h1>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">Carregando filmes...</div>
+
+        <div id="moviesList" class="row g-4"></div>
+
+        <div id="detailsContainer" class="details-container mt-5">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Detalhes do Filme</h3>
+                    <button class="btn btn-sm btn-light" onclick="fecharDetalhes()">Fechar</button>
+                </div>
+                <div class="card-body">
+                    <div id="movieDetails"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const apiAll = "http://localhost:7260/api/all";
+    const apiDetailBase = "http://localhost:7240/api/detail?id=";
+
+    async function carregarFilmes() {
+      const loading = document.getElementById("loading");
+      const moviesList = document.getElementById("moviesList");
+
+      try {
+        const response = await fetch(apiAll);
+        if (!response.ok) {
+          throw new Error("Erro ao buscar lista de filmes.");
+        }
+
+        const filmes = await response.json();
+
+        loading.style.display = "none";
+        moviesList.innerHTML = "";
+
+        if (!filmes || filmes.length === 0) {
+          moviesList.innerHTML = `
+            <div class="col-12">
+              <div class="alert alert-warning text-center">
+                Nenhum filme encontrado.
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        filmes.forEach(filme => {
+          const card = document.createElement("div");
+          card.className = "col-md-6 col-lg-4";
+
+          card.innerHTML = `
+            <div class="card movie-card shadow-sm" onclick="carregarDetalhes('${filme.id}')">
+              <img
+                src="${filme.thumb || 'https://via.placeholder.com/400x250?text=Sem+Imagem'}"
+                class="card-img-top movie-poster"
+                alt="${filme.title || 'Filme'}"
+              />
+              <div class="card-body">
+                <h5 class="card-title">${filme.title || 'Sem título'}</h5>
+                <p class="card-text mb-1"><strong>Ano:</strong> ${filme.year || 'Não informado'}</p>
+                <p class="card-text text-muted">
+                  ${(filme.description || 'Sem descrição').substring(0, 100)}...
+                </p>
+              </div>
+              <div class="card-footer bg-white border-0">
+                <button class="btn btn-primary w-100" onclick="event.stopPropagation(); carregarDetalhes('${filme.id}')">
+                  Ver detalhes
+                </button>
+              </div>
+            </div>
+          `;
+
+          moviesList.appendChild(card);
+        });
+
+      } catch (error) {
+        loading.style.display = "none";
+        moviesList.innerHTML = `
+          <div class="col-12">
+            <div class="alert alert-danger text-center">
+              ${error.message}
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    async function carregarDetalhes(id) {
+      const detailsContainer = document.getElementById("detailsContainer");
+      const movieDetails = document.getElementById("movieDetails");
+
+      movieDetails.innerHTML = `
+        <div class="text-center py-4">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="mt-3 mb-0">Carregando detalhes...</p>
+        </div>
+      `;
+
+      detailsContainer.style.display = "block";
+
+      try {
+        const response = await fetch(apiDetailBase + id);
+        if (!response.ok) {
+          throw new Error("Erro ao buscar detalhes do filme.");
+        }
+
+        const filme = await response.json();
+
+        movieDetails.innerHTML = `
+          <div class="row">
+            <div class="col-md-4 mb-3">
+
+            <video width="100%" height="360" controls autoplay>
+                <source src="${filme.video}" />
+                Seu navegador não suporta a reprodução de vídeo.
+            </video>
+
+            </div>
+            <div class="col-md-8">
+              <h2>${filme.title || 'Sem título'}</h2>
+              <hr />
+              <p><strong>Ano:</strong> ${filme.year || '-'}</p>
+              <p><strong>Duração:</strong> ${filme.duration || '-'}</p>
+              <p><strong>Diretor:</strong> ${filme.director || '-'}</p>
+              <p><strong>Elenco:</strong> ${filme.cast || '-'}</p>
+              <p><strong>Sinopse:</strong></p>
+              <p>${filme.description || 'Sem descrição disponível.'}</p>
+            </div>
+          </div>
+        `;
+
+        detailsContainer.scrollIntoView({ behavior: "smooth" });
+
+      } catch (error) {
+        movieDetails.innerHTML = `
+          <div class="alert alert-danger">
+            ${error.message}
+          </div>
+        `;
+      }
+    }
+
+    function fecharDetalhes() {
+      document.getElementById("detailsContainer").style.display = "none";
+      document.getElementById("movieDetails").innerHTML = "";
+    }
+
+    carregarFilmes();
+    </script>
+</body>
+</html>
