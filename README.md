@@ -4,8 +4,8 @@
 ![.NET](https://img.shields.io/badge/.NET-8-blue)
 ![Azure Functions](https://img.shields.io/badge/Azure-Functions-0062AD)
 ![Azure Storage](https://img.shields.io/badge/Azure-Storage-0078D4)
-![Bootstrap](https://img.shields.io/badge/UI-Bootstrap-purple)
 ![Azure Cosmos DB](https://img.shields.io/badge/Azure-Cosmos%20DB-0078D4)
+![Bootstrap](https://img.shields.io/badge/UI-Bootstrap-purple)
 
 Projeto de estudo demonstrando uma **arquitetura serverless com Azure Functions** para gerenciamento de um catálogo de filmes pela plataforma DIO (https://www.dio.me/ - Curso Microsoft Certification Challenge #5 - AZ-204).
 
